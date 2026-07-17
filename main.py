@@ -17,11 +17,11 @@ class SpecsRequest(BaseModel):
 def specs(request: SpecsRequest):
     link = request.url
     if not link:
-        return jsonify({"error": "Missing 'url' parameter"}), 400
+        return {"error": "Missing 'url' parameter"}, 400
 
     response = requests.get(link)
     if response.status_code != 200:
-        return jsonify({"error": f"Failed to fetch page, status {response.status_code}"}), 502
+        return {"error": f"Failed to fetch page, status {response.status_code}"}, 502
 
     soup = BeautifulSoup(response.text, 'html.parser')
     specs = [[spec.find('h3'), spec.find_all('li') or spec.find_all('p')] for spec in soup.find_all('div', class_='card-b -fh')]
