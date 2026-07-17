@@ -1,14 +1,13 @@
 from bs4 import BeautifulSoup
 import requests
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
-
 
 app = FastAPI()
 
 @app.get('/')
 def home():
-    return "Welcome to the web scraping api!"
+    return {"message": "Welcome to the web scraping api!"}
 
 class SpecsRequest(BaseModel):
     url: str
@@ -17,14 +16,20 @@ class SpecsRequest(BaseModel):
 def specs(request: SpecsRequest):
     link = request.url
     if not link:
-        return {"error": "Missing 'url' parameter"}, 400
+        raise HTTPException(status_code=400, detail="Missing 'url' parameter")
 
     response = requests.get(link)
     if response.status_code != 200:
-        return {"error": f"Failed to fetch page, status {response.status_code}"}, 502
+        raise HTTPException(
+            status_code=502,
+            detail=f"Failed to fetch page, status {response.status_code}"
+        )
 
     soup = BeautifulSoup(response.text, 'html.parser')
-    specs = [[spec.find('h3'), spec.find_all('li') or spec.find_all('p')] for spec in soup.find_all('div', class_='card-b -fh')]
+    specs = [
+        [spec.find('h3'), spec.find_all('li') or spec.find_all('p')]
+        for spec in soup.find_all('div', class_='card-b -fh')
+    ]
     final_specs = {}
 
     for spec in specs:
